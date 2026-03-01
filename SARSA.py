@@ -41,7 +41,50 @@ def sarsa(n_timesteps, learning_rate, gamma, policy='egreedy', epsilon=None, tem
     eval_returns = []
 
     # TO DO: Write your SARSA algorithm here!
+
+    # initialize state and action
+    s = env.reset()
+    if policy == 'egreedy':
+        a = pi.select_action(s, policy='egreedy', epsilon=epsilon)
+    elif policy == 'softmax':
+        a = pi.select_action(s, policy='softmax', temp=temp)
     
+    # loop over budget = timesteps
+    for t in range(1, n_timesteps + 1):
+
+        # simulate environment
+        s_next, r, done = env.step(a)
+
+        # sample action (on-policy)
+        if not done:
+            if policy == 'egreedy':
+                a_next = pi.select_action(s_next, policy='egreedy', epsilon=epsilon)
+            elif policy == 'softmax':
+                a_next = pi.select_action(s_next, policy='softmax', temp=temp)
+        else:
+            a_next = None
+
+        # update Q-values
+        pi.update(s, a, r, s_next, a_next, done)
+
+        # move to next state, reset environment
+        if done:
+            s = env.reset()
+            if policy == 'egreedy':
+                a = pi.select_action(s, policy='egreedy', epsilon=epsilon)
+            elif policy == 'softmax':
+                a = pi.select_action(s, policy='softmax', temp=temp)
+        else:
+            s = s_next
+            a = a_next
+
+        # evaluation
+        if t % eval_interval == 0:
+            mean_return = pi.evaluate(eval_env)
+            eval_returns.append(mean_return)
+            eval_timesteps.append(t)
+
+
     # if plot:
     #    env.render(Q_sa=pi.Q_sa,plot_optimal_policy=True,step_pause=0.1) # Plot the Q-value estimates during SARSA execution
 
