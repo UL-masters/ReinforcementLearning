@@ -13,8 +13,21 @@ from Agent import BaseAgent
 class SarsaAgent(BaseAgent):
         
     def update(self,s,a,r,s_next,a_next,done):
-        # TO DO: Add own code
-        pass
+        # current state, action, reward, next state, next action, done flag
+        
+        # current Q value
+        current_q = self.Q[s][a]
+
+        # compute target (Gt)
+        # reward plus the discounted value of the next action
+        if done:
+            target = r
+        else:
+            target = r + self.gamma * self.Q[s_next][a_next]
+
+        # SARSA update
+        # move the current Q-value a bit towards the target
+        self.Q[s][a] = current_q + self.alpha * (target - current_q)
 
         
 def sarsa(n_timesteps, learning_rate, gamma, policy='egreedy', epsilon=None, temp=None, plot=True, eval_interval=500):
