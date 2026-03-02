@@ -17,7 +17,18 @@ class MonteCarloAgent(BaseAgent):
         actions is a list of actions observed in the episode, of length T_ep
         rewards is a list of rewards observed in the episode, of length T_ep
         done indicates whether the final s in states is was a terminal state '''
-        # TO DO: Add own code
+        G = 0.0  # this is G_{t+1} = 0
+        
+        # loop backwards
+        for t in reversed(range(len(actions))):
+            
+            G = rewards[t] + self.gamma * G
+            
+            s = states[t]
+            a = actions[t]
+            
+            # Monte Carlo update
+            self.Q_sa[s, a] += self.learning_rate * (G - self.Q_sa[s, a])
 
 def monte_carlo(n_timesteps, max_episode_length, learning_rate, gamma, 
                    policy='egreedy', epsilon=None, temp=None, plot=True, eval_interval=500):
