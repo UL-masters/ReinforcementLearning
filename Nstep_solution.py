@@ -17,8 +17,30 @@ class NstepQLearningAgent(BaseAgent):
         actions is a list of actions observed in the episode, of length T_ep
         rewards is a list of rewards observed in the episode, of length T_ep
         done indicates whether the final s in states is was a terminal state '''
-        # TO DO: Add own code
-        pass
+        T_ep = len(actions)  # episode length
+        
+        for t in range(T_ep):
+            # number of rewards to sum
+            m = min(n, T_ep - t)
+
+            # compute n-step return
+            G = 0.0
+            
+            # sum of discounted rewards
+            for i in range(m):
+                G += (self.gamma ** i) * rewards[t + i]
+            
+            # bootstrapping term
+            if t + m < T_ep:
+                s_bootstrap = states[t + m]
+                G += (self.gamma ** m) * np.max(self.Q_sa[s_bootstrap])
+            
+            # update
+            s = states[t]
+            a = actions[t]
+            
+            self.Q_sa[s, a] += self.learning_rate * (G - self.Q_sa[s, a])
+
 
 def n_step_Q(n_timesteps, max_episode_length, learning_rate, gamma, 
                    policy='egreedy', epsilon=None, temp=None, plot=True, n=5, eval_interval=500):
