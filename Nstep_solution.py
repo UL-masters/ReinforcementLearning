@@ -53,10 +53,50 @@ def n_step_Q(n_timesteps, max_episode_length, learning_rate, gamma,
     eval_timesteps = []
     eval_returns = []
 
-    # TO DO: Write your n-step Q-learning algorithm here!
+    timestep = 0
     
-    # if plot:
-    #    env.render(Q_sa=pi.Q_sa,plot_optimal_policy=True,step_pause=0.1) # Plot the Q-value estimates during n-step Q-learning execution
+    while timestep < n_timesteps: # budget = timesteps
+        
+        states = []
+        actions = []
+        rewards = []
+        
+        s = env.reset()
+        states.append(s)
+        
+        done = False
+        episode_length = 0
+        
+        while not done and episode_length < max_episode_length and timestep < n_timesteps:
+            
+            # sample action
+            if policy == 'egreedy':
+                a = pi.select_action(s, policy='egreedy', epsilon=epsilon)
+            elif policy == 'softmax':
+                a = pi.select_action(s, policy='softmax', temp=temp)
+            
+            # simulate environment
+            s_next, r, done = env.step(a)
+            
+            actions.append(a)
+            rewards.append(r)
+            states.append(s_next)
+            
+            s = s_next
+            episode_length += 1
+            timestep += 1
+            
+            # evaluation
+            if timestep % eval_interval == 0:
+                mean_return = pi.evaluate(eval_env)
+                eval_returns.append(mean_return)
+                eval_timesteps.append(timestep)
+        
+        # after episode ends → update
+        pi.update(states, actions, rewards, done, n)
+    
+        if plot:
+            env.render(Q_sa=pi.Q_sa,plot_optimal_policy=True,step_pause=0.1) # Plot the Q-value estimates during n-step Q-learning execution
         
     return np.array(eval_returns), np.array(eval_timesteps) 
 
