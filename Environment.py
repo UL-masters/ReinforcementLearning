@@ -151,7 +151,7 @@ class StochasticWindyGridworld:
                     next_state_with_wind = self._location_to_state(next_location_with_wind)   
                     
                     # Update p_sas and r_sas
-                    p_sas[s,a,next_state_with_wind] += self.wind_blows_proportion
+                    p_sas[s,a,next_state_with_wind] += (1-self.wind_blows_proportion)
                     for (i,goal) in enumerate(self.goal_locations):
                         if np.all(next_location_with_wind == goal): # reached a goal!
                             r_sas[s,a,next_state_with_wind]  = self.goal_rewards[i]
