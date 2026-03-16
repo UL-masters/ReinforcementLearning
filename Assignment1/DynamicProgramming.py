@@ -7,8 +7,8 @@ By Thomas Moerland
 """
 
 import numpy as np
-from Environment import StochasticWindyGridworld
-from Helper import argmax
+from Assignment1.Environment import StochasticWindyGridworld
+from Assignment1.Helper import argmax
 
 class QValueIterationAgent:
     ''' Class to store the Q-value iteration solution, perform updates, and select the greedy action '''

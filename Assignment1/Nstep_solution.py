@@ -7,8 +7,8 @@ By Thomas Moerland
 """
 
 import numpy as np
-from Environment import StochasticWindyGridworld
-from Agent import BaseAgent
+from Assignment1.Environment import StochasticWindyGridworld
+from Assignment1.Agent import BaseAgent
 
 class NstepQLearningAgent(BaseAgent):
         

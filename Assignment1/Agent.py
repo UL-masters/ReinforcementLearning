@@ -7,7 +7,7 @@ By Thomas Moerland
 """
 
 import numpy as np
-from Helper import softmax, argmax
+from Assignment1.Helper import softmax, argmax
 
 class BaseAgent:
 

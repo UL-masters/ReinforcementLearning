@@ -9,11 +9,11 @@ By Thomas Moerland
 import numpy as np
 import time
 
-from Q_learning_solution import q_learning
-from SARSA_solution import sarsa
-from Nstep_solution import n_step_Q
-from MonteCarlo_solution import monte_carlo
-from Helper import LearningCurvePlot, smooth
+from Assignment1.Q_learning_solution import q_learning
+from Assignment1.SARSA_solution import sarsa
+from Assignment1.Nstep_solution import n_step_Q
+from Assignment1.MonteCarlo_solution import monte_carlo
+from Assignment1.Helper import LearningCurvePlot, smooth
 
 def average_over_repetitions(backup, n_repetitions, n_timesteps, max_episode_length, learning_rate, gamma, policy='egreedy', 
                     epsilon=None, temp=None, smoothing_window=None, plot=False, n=5, eval_interval=500):
@@ -52,7 +52,7 @@ def experiment():
     n_timesteps = 50001 # Set one extra timestep to ensure evaluation at start and end
     eval_interval = 1000
     max_episode_length = 100
-    gamma = 1.0
+    gamma = 1.00 
     
     # Parameters we will vary in the experiments, set them to some initial values: 
     # Exploration
@@ -81,12 +81,12 @@ def experiment():
     epsilons = [0.03,0.1,0.3]
     learning_rate = 0.1
     backup = 'q'
-    Plot = LearningCurvePlot(title = 'Exploration: $\epsilon$-greedy versus softmax exploration')    
+    Plot = LearningCurvePlot(title = 'Exploration: $\\epsilon$-greedy versus softmax exploration')    
     Plot.set_ylim(-100, 100) 
     for epsilon in epsilons:        
         learning_curve, timesteps = average_over_repetitions(backup, n_repetitions, n_timesteps, max_episode_length, learning_rate, 
                                               gamma, policy, epsilon, temp, smoothing_window, plot, n, eval_interval)
-        Plot.add_curve(timesteps,learning_curve,label=r'$\epsilon$-greedy, $\epsilon $ = {}'.format(epsilon))    
+        Plot.add_curve(timesteps,learning_curve,label=r'$\epsilon$-greedy, $\epsilon$ = {}'.format(epsilon))    
     policy = 'softmax'
     temps = [0.01,0.1,1.0]
     for temp in temps:
