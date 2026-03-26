@@ -6,9 +6,8 @@ from DQN_naive import NaiveAgent
 env = gym.make("CartPole-v1")
 naive_agent = NaiveAgent()
 
-TOTAL_STEPS = 1_000_000
+TOTAL_STEPS = 1_000_000 # total environment steps to train for
 TARGET_UPDATE_FREQ = 1000  # steps, not episodes
-LEARNING_STARTS = 1000   # don't train until buffer has this many samples
 TRAIN_FREQ = 1   # train every N steps
 
 returns = []
@@ -43,6 +42,7 @@ while env_step < TOTAL_STEPS:
         if episode % 50 == 0:
             print(f"Episode {episode} | Steps {env_step} | Return: {episode_return:.1f} | Epsilon: {naive_agent.epsilon:.3f}")
 
+        # reset environment for next episode
         state, _ = env.reset()
         episode_return = 0
         episode += 1
