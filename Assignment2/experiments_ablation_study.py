@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import gymnasium as gym
 import numpy as np
 import pandas as pd
@@ -11,14 +13,12 @@ import torch
 from DQN_naive import NaiveAgent 
 
 # # ablation study to test the impact of different hyperparameters on the naive DQN agent's performance on CartPole-v1. 
-# # we will vary 
-# # - learning rate
-# # - update-to-data ratio (how many environment steps per update)
-# # - network size
-# # - exploration factor
-# # - epsilon decay
-# # - hidden layer size
-# # - gamma
+# we will vary:
+# - learning rate (lr)
+# - update-to-data ratio (train_freq)
+# - network size (hidden_size)
+# - exploration factor (epsilon_decay_steps)
+# - discount factor (gamma)
 # # and save results for analysis
 
 
@@ -31,7 +31,7 @@ def moving_average(data, window=10):
 
 
 # run single experiment with given config and return episode returns and steps log
-def run_experiment(config, total_steps=200_000, train_freq=1, seed=0):
+def run_experiment(config, total_steps=500_000, train_freq=4, seed=0):
 
     env = gym.make("CartPole-v1")
     agent = NaiveAgent(**config)
@@ -108,6 +108,8 @@ def interpolate_to_common_steps(all_returns, all_steps, n_points=500):
 
 # main function to run all experiments and save summary results
 if __name__ == "__main__":
+    start = datetime.now()
+    print(f"Starting ablation study at {start.strftime('%Y-%m-%d %H:%M:%S')}")
 
     os.makedirs("Assignment2/experiments", exist_ok=True)
 
@@ -117,7 +119,7 @@ if __name__ == "__main__":
         # train_freq is handled separately since it's not a parameter of the agent
         "epsilon_decay_steps": 500_000,
         "hidden_size": 64,
-        "gamma": 0.95 # TODO: experiment with 0.8, 0.95 and 0.99 because baseline is 0.95 for all experiments
+        "gamma": 0.9
     }
 
     # params to test — varied in orders of magnitude
@@ -130,7 +132,7 @@ if __name__ == "__main__":
     }
 
     results_summary = []
-    N_SEEDS = 3
+    N_SEEDS = 5
     for param, values in experiments.items():
         print(f"\n=== Testing {param} ===")
 
@@ -149,6 +151,10 @@ if __name__ == "__main__":
                 returns, steps = run_experiment(config, train_freq=train_freq, seed=seed_val)
                 all_runs.append(returns)
                 all_steps.append(steps)
+                
+                # save individual seed result
+                seed_filename = f"Assignment2/experiments/{param}_{val}_seed{seed_val}.csv"
+                save_results(returns, steps, seed_filename)
 
             # average across seeds
             interpolated, common_steps = interpolate_to_common_steps(all_runs, all_steps)
@@ -165,20 +171,44 @@ if __name__ == "__main__":
                 "param": param,
                 "value": val,
                 "final_mean": metrics["final_mean"],
-                "std": metrics["std"]
+                "std": metrics["std"],
+                 "std_across_seeds": np.std([np.mean(run[-50:]) for run in all_runs])
             })
 
     # Save summary
     summary_df = pd.DataFrame(results_summary)
     summary_df.to_csv("Assignment2/experiments/summary.csv", index=False)
     
-    fig, axs = plt.subplots(2, 2, figsize=(10, 8))
+    # plot ablation results
+    fig, axs = plt.subplots(3, 2, figsize=(14, 12))  # 5 params, use 3x2 grid
+    axs = axs.flatten()
+
+    for i, param in enumerate(experiments.keys()):
+        ax = axs[i]
+        for val in experiments[param]:
+            filename = f"Assignment2/experiments/{param}_{val}.csv"
+            df = pd.read_csv(filename)
+            smoothed = moving_average(df["Episode_Return"].values, window=20)
+            steps = df["env_step"].values[len(df) - len(smoothed):]
+            ax.plot(steps, smoothed, label=f"{param}={val}")
+        ax.set_title(f"Effect of {param}")
+        ax.set_xlabel("Environment Steps")
+        ax.set_ylabel("Mean Return")
+        ax.legend(fontsize=8)
+        ax.grid(True)
+
+    axs[-1].set_visible(False)  # hide empty 6th subplot
+    plt.tight_layout()
+    plt.savefig("Assignment2/experiments/ablation_study.png", dpi=150)
+    plt.show()
+    end = datetime.now()
+    print(f"Ablation study completed at {end.strftime('%Y-%m-%d %H:%M:%S')}, duration: {end - start}")
 
 print("Ablation study completed. Results saved in Assignment2/experiments/")
 for param in experiments.keys():
     subset = summary_df[summary_df["param"] == param]
     best = subset.loc[subset["final_mean"].idxmax()]
-    print(f"Best {param}: {best['value']} (mean return: {best['final_mean']:.1f})")
+    print(f"Best {param}: {best['value']} (mean return: {best['final_mean']:.1f} ± {best['std_across_seeds']:.1f})")
 
 # Best lr: 0.0001 (mean return: 17.9)
 # Best train_freq: 16.0 (mean return: 17.7)
