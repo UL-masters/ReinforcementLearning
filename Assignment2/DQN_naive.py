@@ -3,18 +3,24 @@ import torch.nn as nn
 import torch.optim as optim
 import random
 
+# based on ablation study, best hyperparameters for naive DQN are:
+# - learning rate: 1e-4
+# - epsilon decay steps: 800_000
+# - hidden size: 256
+# - gamma: 0.9
+
 # class representing a naive DQN agent without experience replay or target networks
 class NaiveAgent:
-    def __init__(self, state_dim=4, action_dim=2):
-        self.model = QNetwork(state_dim, action_dim)
-        self.optimizer = optim.Adam(self.model.parameters(), lr=1e-4) # learning rate and Adam optimizer
+    def __init__(self, state_dim=4, action_dim=2, lr=1e-4, hidden_size=256, epsilon_decay_steps=800_000, gamma=0.9):
+        self.model = QNetwork(state_dim, action_dim, hidden_size) # Q-network to estimate action values
+        self.optimizer = optim.Adam(self.model.parameters(), lr=lr) # learning rate and Adam optimizer
 
-        self.gamma = 0.99
+        self.gamma = gamma
         self.action_dim = action_dim
 
         self.epsilon = 1.0
         self.epsilon_min = 0.05
-        self.epsilon_decay = (1.0 - 0.05) / (0.5 * 1_000_000) # decay epsilon from 1.0 to 0.05 over 500k steps
+        self.epsilon_decay = (1.0 - 0.05) / epsilon_decay_steps # decay epsilon from 1.0 to 0.05 over epsilon_decay_steps
 
     # epsilon-greedy action selection
     def select_action(self, state):
@@ -55,15 +61,15 @@ class NaiveAgent:
 # simple feedforward neural network to represent the Q-function     
 class QNetwork(nn.Module):
     
-    def __init__(self, state_dim=4, action_dim=2):
+    def __init__(self, state_dim=4, action_dim=2, hidden_size=64):
         super().__init__()
         self.net = nn.Sequential(
             # two hidden layers with 64 units each and ReLU activations
-            nn.Linear(state_dim, 64), 
+            nn.Linear(state_dim, hidden_size), 
             nn.ReLU(),
-            nn.Linear(64, 64),
+            nn.Linear(hidden_size, hidden_size),
             nn.ReLU(),
-            nn.Linear(64, action_dim)
+            nn.Linear(hidden_size, action_dim)
         )
 
     # forward pass to compute Q-values for all actions given a state

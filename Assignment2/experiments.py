@@ -2,6 +2,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 
+#------- PERFORMANCE COMPARISON PLOT --------
+
 baseline = pd.read_csv("Assignment2/BaselineDataCartPole.csv")
 dqn_naive = pd.read_csv("Assignment2/dqn_results.csv")
 dqn_experience_replay = pd.read_csv("Assignment2/dqn_experience_replay_results.csv")
@@ -87,5 +89,3 @@ with open("Assignment2/metrics.txt", "w") as f:
     f.write(f"DQN Naive AUC: {dqn_auc:.2f}\n")
     f.write(f"DQN Experience Replay AUC: {dqn_experience_replay_auc:.2f}\n")
     
-    
-
