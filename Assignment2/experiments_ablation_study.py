@@ -31,7 +31,7 @@ def moving_average(data, window=10):
 
 
 # run single experiment with given config and return episode returns and steps log
-def run_experiment(config, total_steps=500_000, train_freq=4, seed=0):
+def run_experiment(config, total_steps=300_000, train_freq=4, seed=0):
 
     env = gym.make("CartPole-v1")
     agent = NaiveAgent(**config)
@@ -132,7 +132,7 @@ if __name__ == "__main__":
     }
 
     results_summary = []
-    N_SEEDS = 5
+    N_SEEDS = 3
     for param, values in experiments.items():
         print(f"\n=== Testing {param} ===")
 
@@ -151,7 +151,7 @@ if __name__ == "__main__":
                 returns, steps = run_experiment(config, train_freq=train_freq, seed=seed_val)
                 all_runs.append(returns)
                 all_steps.append(steps)
-                
+
                 # save individual seed result
                 seed_filename = f"Assignment2/experiments/{param}_{val}_seed{seed_val}.csv"
                 save_results(returns, steps, seed_filename)
@@ -204,15 +204,11 @@ if __name__ == "__main__":
     end = datetime.now()
     print(f"Ablation study completed at {end.strftime('%Y-%m-%d %H:%M:%S')}, duration: {end - start}")
 
-print("Ablation study completed. Results saved in Assignment2/experiments/")
-for param in experiments.keys():
-    subset = summary_df[summary_df["param"] == param]
-    best = subset.loc[subset["final_mean"].idxmax()]
-    print(f"Best {param}: {best['value']} (mean return: {best['final_mean']:.1f} ± {best['std_across_seeds']:.1f})")
+    print("Ablation study completed. Results saved in Assignment2/experiments/")
+    for param in experiments.keys():
+        subset = summary_df[summary_df["param"] == param]
+        best = subset.loc[subset["final_mean"].idxmax()]
+        print(f"Best {param}: {best['value']} (mean return: {best['final_mean']:.1f} ± {best['std_across_seeds']:.1f})")
 
-# Best lr: 0.0001 (mean return: 17.9)
-# Best train_freq: 16.0 (mean return: 17.7)
-# Best epsilon_decay_steps: 1000000.0 (mean return: 22.5)
-# Best hidden_size: 32.0 (mean return: 17.7)
-# Best gamma: 0.9 (mean return: 55.6)
+
 
