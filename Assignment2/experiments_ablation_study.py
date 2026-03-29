@@ -83,7 +83,7 @@ if __name__ == "__main__":
 
     os.makedirs("Assignment2/experiments", exist_ok=True)
 
-    # baseline config — middle value of each parameter range
+    # baseline config - middle value of each parameter range
     baseline_config = {
         "lr": 1e-3,
         "epsilon_decay_steps": 500_000,
@@ -91,7 +91,7 @@ if __name__ == "__main__":
         "gamma": 0.9
     }
 
-    # parameters to sweep — train_freq handled separately (not an agent param)
+    # parameters to sweep - train_freq handled separately
     experiments = {
         "lr":                   [1e-4, 1e-3, 1e-2],
         "train_freq":           [1, 4, 16],
