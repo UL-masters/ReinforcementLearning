@@ -1,91 +1,87 @@
 import pandas as pd
 import matplotlib.pyplot as plt
+import matplotlib.ticker as ticker
 import numpy as np
+import seaborn as sns
 
-#------- PERFORMANCE COMPARISON PLOT --------
+sns.set_theme(style="whitegrid", palette="muted")
 
-baseline = pd.read_csv("Assignment2/BaselineDataCartPole.csv")
-dqn_naive = pd.read_csv("Assignment2/dqn_results.csv")
-dqn_experience_replay = pd.read_csv("Assignment2/dqn_experience_replay_results.csv")
+# -------- LOAD DATA --------
 
-# plot 
-plt.plot(baseline["env_step"], baseline["Episode_Return_smooth"], label="Baseline")
-plt.plot(dqn_naive["env_step"], dqn_naive["Episode_Return_smooth"], label="DQN Naive")
-plt.plot(dqn_experience_replay["env_step"], dqn_experience_replay["Episode_Return_smooth"], label="DQN Experience Replay")
+baseline             = pd.read_csv("Assignment2/BaselineDataCartPole.csv")
+dqn_naive            = pd.read_csv("Assignment2/dqn_results.csv")
+dqn_er               = pd.read_csv("Assignment2/dqn_experience_replay_results.csv")
+dqn_tn               = pd.read_csv("Assignment2/dqn_target_network_results.csv")
+dqn_full             = pd.read_csv("Assignment2/dqn_full_results.csv")
 
-plt.xlabel("Environment Steps")
-plt.ylabel("Episode Return (smoothed)")
-plt.title("Performance Comparison")
-plt.legend()
+# -------- FOUR-WAY COMPARISON PLOT --------
 
-# save plot
-plt.savefig("Assignment2/performance_comparison.png")
+fig, ax = plt.subplots(figsize=(10, 5))
 
-# ---------- METRICS --------
+configs = [
+    (dqn_naive, "Naive",      "#e07b54"),
+    (dqn_tn,    "TN only",    "#5b8dd9"),
+    (dqn_er,    "ER only",    "#57a773"),
+    (dqn_full,  "TN + ER",    "#9b59b6"),
+    (baseline,  "Baseline",   "#888888"),
+]
 
-# final performance
+for df, label, color in configs:
+    ax.plot(df["env_step"], df["Episode_Return_smooth"],
+            label=label, color=color, linewidth=1.8)
 
-baseline_final = baseline["Episode_Return"].tail(50).mean()
-dqn_naive_final = dqn_naive["Episode_Return"].tail(50).mean()
-dqn_experience_replay_final = dqn_experience_replay["Episode_Return"].tail(50).mean()
+ax.axhline(y=500, color="black", linestyle="--", linewidth=1, alpha=0.4, label="Optimal (500)")
+ax.set_xlabel("Environment Steps", fontsize=12)
+ax.set_ylabel("Episode Return (smoothed)", fontsize=12)
+ax.set_title("DQN Variants — Four-Way Comparison", fontsize=14, fontweight="bold")
+ax.legend(fontsize=10)
+ax.xaxis.set_major_formatter(ticker.FuncFormatter(lambda x, _: f'{int(x/1000)}k'))
+ax.spines[["top", "right"]].set_visible(False)
 
-print("Baseline final:", baseline_final)
-print("DQN final:", dqn_naive_final)
-print("DQN Experience Replay final:", dqn_experience_replay_final)
+plt.tight_layout()
+plt.savefig("Assignment2/four_way_comparison.png", dpi=150, bbox_inches="tight")
+plt.show()
+print("Plot saved to Assignment2/four_way_comparison.png")
 
-# stability / variance (std of last 50 episodes)
+# -------- METRICS --------
 
-baseline_std = baseline["Episode_Return"].tail(50).std()
-dqn_naive_std = dqn_naive["Episode_Return"].tail(50).std()
-dqn_experience_replay_std = dqn_experience_replay["Episode_Return"].tail(50).std()
+threshold = 495  # CartPole-v1 is considered solved at 500, use 495 as threshold
 
-print("Baseline std:", baseline_std)
-print("DQN std:", dqn_naive_std)
-print("DQN Experience Replay std:", dqn_experience_replay_std)
-
-# sample efficiency (steps to reach return of 195)
-
-threshold = 195  
-
-def steps_to_threshold(df):
+def steps_to_threshold(df, col="Episode_Return_smooth"):
     for i in range(len(df)):
-        if df["Episode_Return_smooth"].iloc[i] >= threshold:
+        if df[col].iloc[i] >= threshold:
             return df["env_step"].iloc[i]
     return None
 
-print("Baseline steps:", steps_to_threshold(baseline))
-print("DQN steps:", steps_to_threshold(dqn_naive))
-print("DQN Experience Replay steps:", steps_to_threshold(dqn_experience_replay))
+print("\n--- Final Performance (mean of last 50 episodes) ---")
+for df, label, _ in configs:
+    print(f"{label}: {df['Episode_Return'].tail(50).mean():.1f} ± {df['Episode_Return'].tail(50).std():.1f}")
 
-# AUC (area under curve)
+print("\n--- Sample Efficiency (steps to reach return of 495) ---")
+for df, label, _ in configs:
+    print(f"{label}: {steps_to_threshold(df)}")
 
-baseline_auc = np.trapezoid(baseline["Episode_Return_smooth"], baseline["env_step"])
-dqn_auc = np.trapezoid(dqn_naive["Episode_Return_smooth"], dqn_naive["env_step"])
-dqn_experience_replay_auc = np.trapezoid(dqn_experience_replay["Episode_Return_smooth"], dqn_experience_replay["env_step"])
+print("\n--- AUC (area under smoothed return curve) ---")
+for df, label, _ in configs:
+    auc = np.trapezoid(df["Episode_Return_smooth"], df["env_step"])
+    print(f"{label}: {auc:.0f}")
 
-print("Baseline AUC:", baseline_auc)
-print("DQN AUC:", dqn_auc)
-print("DQN Experience Replay AUC:", dqn_experience_replay_auc)
+# -------- SAVE METRICS --------
 
-# save metrics to a text file
 with open("Assignment2/metrics.txt", "w") as f:
-    f.write(f"Final Performance (mean return of last 50 episodes):\n")
-    f.write(f"Baseline: {baseline_final:.2f}\n")
-    f.write(f"DQN Naive: {dqn_naive_final:.2f}\n")
-    f.write(f"DQN Experience Replay: {dqn_experience_replay_final:.2f}\n\n")
+    f.write("Final Performance (mean return of last 50 episodes):\n")
+    for df, label, _ in configs:
+        mean = df["Episode_Return"].tail(50).mean()
+        std  = df["Episode_Return"].tail(50).std()
+        f.write(f"  {label}: {mean:.2f} ± {std:.2f}\n")
 
-    f.write(f"Stability (std of return of last 50 episodes):\n")
-    f.write(f"Baseline: {baseline_std:.2f}\n")
-    f.write(f"DQN Naive: {dqn_naive_std:.2f}\n")
-    f.write(f"DQN Experience Replay: {dqn_experience_replay_std:.2f}\n\n")
+    f.write("\nSample Efficiency (steps to reach return of 495):\n")
+    for df, label, _ in configs:
+        f.write(f"  {label}: {steps_to_threshold(df)}\n")
 
-    f.write(f"Sample Efficiency (steps to reach return of 195):\n")
-    f.write(f"Baseline: {steps_to_threshold(baseline)} steps\n")
-    f.write(f"DQN Naive: {steps_to_threshold(dqn_naive)} steps\n")
-    f.write(f"DQN Experience Replay: {steps_to_threshold(dqn_experience_replay)} steps\n\n")
+    f.write("\nAUC (area under smoothed return curve):\n")
+    for df, label, _ in configs:
+        auc = np.trapezoid(df["Episode_Return_smooth"], df["env_step"])
+        f.write(f"  {label}: {auc:.0f}\n")
 
-    f.write(f"AUC (area under curve of smoothed returns):\n")
-    f.write(f"Baseline AUC: {baseline_auc:.2f}\n")
-    f.write(f"DQN Naive AUC: {dqn_auc:.2f}\n")
-    f.write(f"DQN Experience Replay AUC: {dqn_experience_replay_auc:.2f}\n")
-    
+print("\nMetrics saved to Assignment2/metrics.txt")
