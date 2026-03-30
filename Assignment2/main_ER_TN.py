@@ -1,7 +1,7 @@
 import gymnasium as gym
 import numpy as np
 import pandas as pd
-from DQN_full import FullDQNAgent
+from DQN_ER_TN import FullDQNAgent
 
 env = gym.make("CartPole-v1")
 agent = FullDQNAgent()
@@ -60,5 +60,5 @@ df = pd.DataFrame({
     "env_step": steps_log[trim:]
 })
 
-df.to_csv("Assignment2/dqn_full_results.csv", index=False)
+df.to_csv("Assignment2/dqn_ER_TN_results.csv", index=False)
 print(f"Done. Total episodes: {episode}, Total steps: {env_step}")

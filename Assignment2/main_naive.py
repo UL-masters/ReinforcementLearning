@@ -6,8 +6,14 @@ from DQN_naive import NaiveAgent
 env = gym.make("CartPole-v1")
 naive_agent = NaiveAgent()
 
+# hyperparameters based on ablation study
+# - learning rate: 0.0001
+# - update-to-data ratio: 1 (train every 1 step)
+# - exploration decay steps: 500 000
+# - network size: 256 hidden units
+# - discount factor: 0.90
+
 TOTAL_STEPS = 1_000_000 # total environment steps to train for
-TARGET_UPDATE_FREQ = 1000  # steps, not episodes
 TRAIN_FREQ = 1   # train every N steps
 
 returns = []
@@ -64,5 +70,5 @@ df = pd.DataFrame({
     "env_step": steps_log[trim:]
 })
 
-df.to_csv("Assignment2/dqn_results.csv", index=False)
+df.to_csv("Assignment2/dqn_naive/dqn_naive_results_5.csv", index=False)
 print(f"Done. Total episodes: {episode}, Total steps: {env_step}")

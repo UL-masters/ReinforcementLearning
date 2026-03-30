@@ -3,15 +3,17 @@ import torch.nn as nn
 import torch.optim as optim
 import random
 
-# based on ablation study, best hyperparameters for naive DQN are:
-# - learning rate: 1e-4
-# - epsilon decay steps: 800_000
-# - hidden size: 256
-# - gamma: 0.9
+# hyperparameters based on ablation study:
+# - learning rate: 0.0001
+# - update-to-data ratio: 1 (train every 1 step)
+# - exploration decay steps: 500 000
+# - network size: 256 hidden units
+# - discount factor: 0.90
 
 # class representing a naive DQN agent without experience replay or target networks
 class NaiveAgent:
-    def __init__(self, state_dim=4, action_dim=2, lr=1e-4, hidden_size=256, epsilon_decay_steps=800_000, gamma=0.9):
+    def __init__(self, state_dim=4, action_dim=2, lr=1e-4, hidden_size=256, epsilon_decay_steps=500_000, gamma=0.9):
+        
         self.model = QNetwork(state_dim, action_dim, hidden_size) # Q-network to estimate action values
         self.optimizer = optim.Adam(self.model.parameters(), lr=lr) # learning rate and Adam optimizer
 
@@ -44,7 +46,7 @@ class NaiveAgent:
             next_q = self.model(next_state).max(1)[0]
             target = reward + self.gamma * next_q * (1 - done)
 
-       # compute the MSE loss btwn Q-value and target
+        # compute the MSE loss btwn Q-value and target
         loss = nn.MSELoss()(q_sa, target.squeeze())
 
         # backpropagate the loss and update the model parameters

@@ -1,7 +1,7 @@
 import gymnasium as gym
 import numpy as np
 import pandas as pd
-from DQN_tn import TargetNetworkAgent
+from DQN_TN import TargetNetworkAgent
 
 env = gym.make("CartPole-v1")
 agent = TargetNetworkAgent()

@@ -8,7 +8,7 @@ sns.set_theme(style="whitegrid", palette="muted")
 
 # -------- LOAD SUMMARY --------
 
-summary_df = pd.read_csv("Assignment2/experiments/summary.csv")
+summary_df = pd.read_csv("Assignment2/experiments-ablation/summary.csv")
 
 # all 5 parameters including train_freq
 params = ["lr", "train_freq", "epsilon_decay_steps", "hidden_size", "gamma"]
@@ -59,6 +59,6 @@ axs[-1].set_visible(False)
 
 plt.suptitle("DQN Hyperparameter Ablation Study", fontsize=15, fontweight='bold', y=1.01)
 plt.tight_layout()
-plt.savefig("Assignment2/experiments/ablation_study.png", bbox_inches='tight', dpi=150)
+plt.savefig("Assignment2/experiments-ablation/ablation_study.png", bbox_inches='tight', dpi=150)
 plt.show()
-print("Ablation plot saved to Assignment2/experiments/ablation_study.png")
+print("Ablation plot saved to Assignment2/experiments-ablation/ablation_study.png")
