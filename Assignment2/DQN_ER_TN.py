@@ -8,7 +8,7 @@ from collections import deque
 
 class FullDQNAgent:
     def __init__(self, state_dim=4, action_dim=2, lr=1e-4, hidden_size=256,
-                 epsilon_decay_steps=800_000, gamma=0.9, target_update_freq=1000):
+                 epsilon_decay_steps=500_000, gamma=0.9, target_update_freq=1000):
 
         self.model = QNetwork(state_dim, action_dim, hidden_size)
         self.target_model = copy.deepcopy(self.model)  # frozen target network

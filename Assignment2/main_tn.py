@@ -3,58 +3,75 @@ import numpy as np
 import pandas as pd
 from DQN_TN import TargetNetworkAgent
 
-env = gym.make("CartPole-v1")
-agent = TargetNetworkAgent()
-
+N_SEEDS = 5
 TOTAL_STEPS = 1_000_000
 
-returns = []
-steps_log = []
+all_runs = []
+all_steps = []
 
-env_step = 0
-episode = 0
+for seed in range(N_SEEDS):
+    print(f"\n=== Seed {seed} ===")
 
-state, _ = env.reset()
-episode_return = 0
+    env = gym.make("CartPole-v1")
+    agent = TargetNetworkAgent()
 
-while env_step < TOTAL_STEPS:
-    action = agent.select_action(state)
-    next_state, reward, terminated, truncated, _ = env.step(action)
-    done = terminated or truncated
+    import random, torch
 
-    agent.train_step(state, action, reward, next_state, float(terminated))
+    random.seed(seed)
+    torch.manual_seed(seed)
+    state, _ = env.reset(seed=seed)
 
-    state = next_state
-    episode_return += reward
-    env_step += 1
-    agent.decay_epsilon()
+    returns = []
+    steps_log = []
+    env_step = 0
+    episode = 0
+    episode_return = 0
 
-    if done:
-        returns.append(episode_return)
-        steps_log.append(env_step)
+    while env_step < TOTAL_STEPS:
+        action = agent.select_action(state)
+        next_state, reward, terminated, truncated, _ = env.step(action)
+        done = terminated or truncated
 
-        if episode % 50 == 0:
-            print(f"Episode {episode} | Steps {env_step} | Return: {episode_return:.1f} | Epsilon: {agent.epsilon:.3f}")
+        agent.train_step(state, action, reward, next_state, float(terminated))
+        state = next_state
+        episode_return += reward
+        env_step += 1
+        agent.decay_epsilon()
 
-        state, _ = env.reset()
-        episode_return = 0
-        episode += 1
+        if done:
+            returns.append(episode_return)
+            steps_log.append(env_step)
+            if episode % 50 == 0:
+                print(
+                    f"Episode {episode} | Steps {env_step} | Return: {episode_return:.1f} | Epsilon: {agent.epsilon:.3f}")
+            state, _ = env.reset()
+            episode_return = 0
+            episode += 1
 
-env.close()
+    env.close()
+    all_runs.append(returns)
+    all_steps.append(steps_log)
+
+# interpolate to common step axis and average
+from experiments_ablation_study import interpolate_to_common_steps
+
 
 def moving_average(data, window=10):
     if len(data) < window:
         return np.array(data)
     return np.convolve(data, np.ones(window) / window, mode='valid')
 
-smoothed = moving_average(returns)
-trim = len(returns) - len(smoothed)
+
+interpolated, common_steps = interpolate_to_common_steps(all_runs, all_steps)
+mean_returns = np.mean(interpolated, axis=0)
+smoothed = moving_average(mean_returns)
+trim = len(mean_returns) - len(smoothed)
 
 df = pd.DataFrame({
-    "Episode_Return": returns[trim:],
+    "Episode_Return": mean_returns[trim:],
     "Episode_Return_smooth": smoothed,
-    "env_step": steps_log[trim:]
+    "env_step": common_steps[trim:]
 })
 
 df.to_csv("Assignment2/dqn_target_network_results.csv", index=False)
-print(f"Done. Total episodes: {episode}, Total steps: {env_step}")
+print(f"\nDone. Results saved.")
