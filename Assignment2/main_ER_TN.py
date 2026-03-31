@@ -1,7 +1,7 @@
 import gymnasium as gym
 import numpy as np
 import pandas as pd
-from DQN_full import FullDQNAgent
+from DQN_ER_TN import FullDQNAgent
 
 env = gym.make("CartPole-v1")
 agent = FullDQNAgent()

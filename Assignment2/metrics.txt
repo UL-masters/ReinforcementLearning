@@ -1,19 +1,17 @@
 Final Performance (mean return of last 50 episodes):
-Baseline: 500.00
-DQN Naive: 9.72
-DQN Experience Replay: 150.16
+  Naive: 107.17 ± 31.54
+  TN only: 69.12 ± 37.63
+  ER only: 150.16 ± 12.54
+  TN + ER: 125.74 ± 80.25
 
-Stability (std of return of last 50 episodes):
-Baseline: 0.00
-DQN Naive: 0.97
-DQN Experience Replay: 12.54
+Sample Efficiency (steps to reach return of 495):
+  Naive: None
+  TN only: None
+  ER only: 380665
+  TN + ER: None
 
-Sample Efficiency (steps to reach return of 195):
-Baseline: 46000 steps
-DQN Naive: None steps
-DQN Experience Replay: 254107 steps
-
-AUC (area under curve of smoothed returns):
-Baseline AUC: 480146652.50
-DQN Naive AUC: 12429601.75
-DQN Experience Replay AUC: 140809584.85
+AUC (area under smoothed return curve):
+  Naive: 57567935
+  TN only: 43794597
+  ER only: 140809585
+  TN + ER: 61188356

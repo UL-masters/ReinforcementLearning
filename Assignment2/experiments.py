@@ -8,22 +8,20 @@ sns.set_theme(style="whitegrid", palette="muted")
 
 # -------- LOAD DATA --------
 
-baseline             = pd.read_csv("Assignment2/BaselineDataCartPole.csv")
-dqn_naive            = pd.read_csv("Assignment2/dqn_results.csv")
-dqn_er               = pd.read_csv("Assignment2/dqn_experience_replay_results.csv")
-dqn_tn               = pd.read_csv("Assignment2/dqn_target_network_results.csv")
-dqn_full             = pd.read_csv("Assignment2/dqn_full_results.csv")
+dqn_naive = pd.read_csv("Assignment2/dqn_naive/average_dqn_naive_results.csv")
+dqn_er = pd.read_csv("Assignment2/dqn_experience_replay_results.csv")
+dqn_tn = pd.read_csv("Assignment2/dqn_target_network_results.csv")
+dqn_er_tn = pd.read_csv("Assignment2/dqn_ER_TN_results.csv")
 
 # -------- FOUR-WAY COMPARISON PLOT --------
 
 fig, ax = plt.subplots(figsize=(10, 5))
 
 configs = [
-    (dqn_naive, "Naive",      "#e07b54"),
-    (dqn_tn,    "TN only",    "#5b8dd9"),
-    (dqn_er,    "ER only",    "#57a773"),
-    (dqn_full,  "TN + ER",    "#9b59b6"),
-    (baseline,  "Baseline",   "#888888"),
+    (dqn_naive, "Naive", "#e07b54"),
+    (dqn_tn, "TN only", "#5b8dd9"),
+    (dqn_er, "ER only", "#57a773"),
+    (dqn_er_tn,"TN + ER", "#9b59b6"),
 ]
 
 for df, label, color in configs:

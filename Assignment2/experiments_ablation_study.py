@@ -144,7 +144,7 @@ if __name__ == "__main__":
             })
 
     summary_df = pd.DataFrame(results_summary)
-    summary_df.to_csv("Assignment2/experiments/summary.csv", index=False)
+    summary_df.to_csv("Assignment2/experiments-ablation/summary.csv", index=False)
 
     end = datetime.now()
     print(f"\nAblation study completed at {end.strftime('%Y-%m-%d %H:%M:%S')} "
