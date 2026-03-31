@@ -60,5 +60,5 @@ df = pd.DataFrame({
     "env_step": steps_log[trim:]
 })
 
-df.to_csv("Assignment2/dqn_full_results.csv", index=False)
+df.to_csv("Assignment2/dqn_er_tn/dqn_er_tn_results_5.csv", index=False)
 print(f"Done. Total episodes: {episode}, Total steps: {env_step}")

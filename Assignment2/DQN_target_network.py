@@ -24,6 +24,7 @@ class TargetNetworkAgent:
         self.epsilon_min = 0.05
         self.epsilon_decay = (1.0 - 0.05) / epsilon_decay_steps
 
+# epsilon-greedy action selection
     def select_action(self, state):
         if random.random() < self.epsilon:
             return random.randint(0, self.action_dim - 1)
@@ -31,6 +32,7 @@ class TargetNetworkAgent:
         with torch.no_grad():
             return self.model(state).argmax().item()
 
+# single training step on one transition 
     def train_step(self, state, action, reward, next_state, done):
         state = torch.tensor(state, dtype=torch.float32).unsqueeze(0)
         next_state = torch.tensor(next_state, dtype=torch.float32).unsqueeze(0)

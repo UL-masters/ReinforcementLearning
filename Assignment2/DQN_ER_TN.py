@@ -5,7 +5,7 @@ import random
 import copy
 from collections import deque
 
-
+# DQN agent with both Experience Replay and Target Network
 class FullDQNAgent:
     def __init__(self, state_dim=4, action_dim=2, lr=1e-4, hidden_size=256,
                  epsilon_decay_steps=500_000, gamma=0.9, target_update_freq=1000):
@@ -35,9 +35,11 @@ class FullDQNAgent:
         with torch.no_grad():
             return self.model(state).argmax().item()
 
+# store transition in replay buffer
     def store_transition(self, state, action, reward, next_state, done):
         self.replay_buffer.add(state, action, reward, next_state, done)
 
+# train on a batch of transitions sampled from replay buffer
     def train_step(self):
         if len(self.replay_buffer) < self.batch_size:
             return
