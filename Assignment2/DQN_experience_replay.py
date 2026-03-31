@@ -3,20 +3,20 @@ import torch.nn as nn
 import torch.optim as optim
 import random
 from collections import deque
+import numpy as np
 
 # class representing a DQN agent with experience replay
 class ExperienceReplayAgent:
-    def __init__(self, state_dim=4, action_dim=2):
-        self.model = QNetwork(state_dim, action_dim)
-        self.optimizer = optim.Adam(self.model.parameters(), lr=1e-4) # learning rate and Adam optimizer
+    def __init__(self, state_dim=4, action_dim=2, lr=1e-4, hidden_size=256, epsilon_decay_steps=500_000, gamma=0.9):
+        self.model = QNetwork(state_dim, action_dim, hidden_size)
+        self.optimizer = optim.Adam(self.model.parameters(), lr=lr)
 
-        self.gamma = 0.99
+        self.gamma = gamma
         self.action_dim = action_dim
 
         self.epsilon = 1.0
         self.epsilon_min = 0.05
-        self.epsilon_decay = (1.0 - 0.05) / (0.5 * 1_000_000) # decay epsilon from 1.0 to 0.05 over 500k steps
-
+        self.epsilon_decay = (1.0 - 0.05) / epsilon_decay_steps
         self.replay_buffer = ReplayBuffer(100_000)
         self.batch_size = 64
 
@@ -65,15 +65,14 @@ class ExperienceReplayAgent:
 # simple feedforward neural network to represent the Q-function     
 class QNetwork(nn.Module):
     
-    def __init__(self, state_dim=4, action_dim=2):
+    def __init__(self, state_dim=4, action_dim=2, hidden_size=256):
         super().__init__()
         self.net = nn.Sequential(
-            # two hidden layers with 64 units each and ReLU activations
-            nn.Linear(state_dim, 64), 
+            nn.Linear(state_dim, hidden_size), 
             nn.ReLU(),
-            nn.Linear(64, 64),
+            nn.Linear(hidden_size, hidden_size),
             nn.ReLU(),
-            nn.Linear(64, action_dim)
+            nn.Linear(hidden_size, action_dim)
         )
 
     # forward pass to compute Q-values for all actions given a state
@@ -94,11 +93,11 @@ class ReplayBuffer:
         states, actions, rewards, next_states, dones = zip(*batch)
 
         return (
-            torch.tensor(states, dtype=torch.float32),
-            torch.tensor(actions, dtype=torch.long),
-            torch.tensor(rewards, dtype=torch.float32),
-            torch.tensor(next_states, dtype=torch.float32),
-            torch.tensor(dones, dtype=torch.float32)
+            torch.tensor(np.array(states), dtype=torch.float32),
+            torch.tensor(np.array(actions), dtype=torch.long),
+            torch.tensor(np.array(rewards), dtype=torch.float32),
+            torch.tensor(np.array(next_states), dtype=torch.float32),
+            torch.tensor(np.array(dones), dtype=torch.float32)
         )
 
     def __len__(self):
