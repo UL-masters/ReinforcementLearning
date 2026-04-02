@@ -4,14 +4,20 @@ import torch.optim as optim
 import random
 import copy
 
+# hyperparameters based on ablation study:
+# - learning rate: 0.0001
+# - update-to-data ratio: 1 (train every 1 step)
+# - exploration decay steps: 500_000
+# - network size: 256 hidden units
+# - discount factor: 0.90
 
 class TargetNetworkAgent:
     def __init__(self, state_dim=4, action_dim=2, lr=1e-4, hidden_size=256,
                  epsilon_decay_steps=500_000, gamma=0.9, target_update_freq=1000):
 
         self.model = QNetwork(state_dim, action_dim, hidden_size)
-        self.target_model = copy.deepcopy(self.model)  # target network
-        self.target_model.eval()
+        self.target_model = copy.deepcopy(self.model)  # target network: frozen copy of model
+        self.target_model.eval()  # target network is never trained directly
 
         self.optimizer = optim.Adam(self.model.parameters(), lr=lr)
 
@@ -24,7 +30,6 @@ class TargetNetworkAgent:
         self.epsilon_min = 0.05
         self.epsilon_decay = (1.0 - 0.05) / epsilon_decay_steps
 
-# epsilon-greedy action selection
     def select_action(self, state):
         if random.random() < self.epsilon:
             return random.randint(0, self.action_dim - 1)
@@ -32,7 +37,6 @@ class TargetNetworkAgent:
         with torch.no_grad():
             return self.model(state).argmax().item()
 
-# single training step on one transition 
     def train_step(self, state, action, reward, next_state, done):
         state = torch.tensor(state, dtype=torch.float32).unsqueeze(0)
         next_state = torch.tensor(next_state, dtype=torch.float32).unsqueeze(0)
@@ -63,7 +67,7 @@ class TargetNetworkAgent:
 
 
 class QNetwork(nn.Module):
-    def __init__(self, state_dim=4, action_dim=2, hidden_size=64):
+    def __init__(self, state_dim=4, action_dim=2, hidden_size=256):
         super().__init__()
         self.net = nn.Sequential(
             nn.Linear(state_dim, hidden_size),

@@ -1,8 +1,8 @@
 Final Performance (mean return of last 50 episodes):
-  Naive: 107.17 Â± 31.54
-  ER Only: 216.89 Â± 49.44
-  TN Only: 81.78 Â± 12.36
-  TN + ER: 192.04 Â± 45.60
+  Naive: 110.64 ± 34.01
+  ER Only: 220.88 ± 47.61
+  TN Only: 73.29 ± 12.99
+  TN + ER: 192.04 ± 45.60
 
 Sample Efficiency (steps to reach return of 495):
   Naive: None
@@ -11,7 +11,7 @@ Sample Efficiency (steps to reach return of 495):
   TN + ER: None
 
 AUC (area under smoothed return curve):
-  Naive: 57567935
-  ER Only: 112716811
-  TN Only: 55524607
+  Naive: 58056940
+  ER Only: 113707651
+  TN Only: 54916332
   TN + ER: 96273582

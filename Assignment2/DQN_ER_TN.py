@@ -5,6 +5,13 @@ import random
 import copy
 from collections import deque
 
+# hyperparameters based on ablation study:
+# - learning rate: 0.0001
+# - update-to-data ratio: 1 (train every 1 step)
+# - exploration decay steps: 500 000
+# - network size: 256 hidden units
+# - discount factor: 0.90
+
 # DQN agent with both Experience Replay and Target Network
 class FullDQNAgent:
     def __init__(self, state_dim=4, action_dim=2, lr=1e-4, hidden_size=256,
