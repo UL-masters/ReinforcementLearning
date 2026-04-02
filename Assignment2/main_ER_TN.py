@@ -13,57 +13,61 @@ def moving_average(data, window=10):
         return np.array(data)
     return np.convolve(data, np.ones(window) / window, mode='valid')
 
-SEED = 0
 TOTAL_STEPS = 1_000_000
 TRAIN_FREQ = 1
 
-env = gym.make("CartPole-v1")
-agent = FullDQNAgent()
+for SEED in range(5):
+    print(f"\n=== Seed {SEED+1}/5 ===")
 
-random.seed(SEED)
-torch.manual_seed(SEED)
-state, _ = env.reset(seed=SEED)
+    env = gym.make("CartPole-v1")
+    agent = FullDQNAgent()
 
-returns = []
-steps_log = []
-env_step = 0
-episode = 0
-episode_return = 0
+    random.seed(SEED)
+    torch.manual_seed(SEED)
+    state, _ = env.reset(seed=SEED)
 
-while env_step < TOTAL_STEPS:
-    action = agent.select_action(state)
-    next_state, reward, terminated, truncated, _ = env.step(action)
-    done = terminated or truncated
+    returns = []
+    steps_log = []
+    env_step = 0
+    episode = 0
+    episode_return = 0
 
-    agent.store_transition(state, action, reward, next_state, float(terminated))
+    while env_step < TOTAL_STEPS:
+        action = agent.select_action(state)
+        next_state, reward, terminated, truncated, _ = env.step(action)
+        done = terminated or truncated
 
-    if env_step % TRAIN_FREQ == 0:
-        agent.train_step()
+        agent.store_transition(state, action, reward, next_state, float(terminated))
 
-    state = next_state
-    episode_return += reward
-    env_step += 1
-    agent.decay_epsilon()
+        if env_step % TRAIN_FREQ == 0:
+            agent.train_step()
 
-    if done:
-        returns.append(episode_return)
-        steps_log.append(env_step)
-        if episode % 50 == 0:
-            print(f"Episode {episode} | Steps {env_step} | Return: {episode_return:.1f} | Epsilon: {agent.epsilon:.3f}")
-        state, _ = env.reset()
-        episode_return = 0
-        episode += 1
+        state = next_state
+        episode_return += reward
+        env_step += 1
+        agent.decay_epsilon()
 
-env.close()
+        if done:
+            returns.append(episode_return)
+            steps_log.append(env_step)
+            if episode % 50 == 0:
+                print(f"Episode {episode} | Steps {env_step} | Return: {episode_return:.1f} | Epsilon: {agent.epsilon:.3f}")
+            state, _ = env.reset()
+            episode_return = 0
+            episode += 1
 
-smoothed = moving_average(returns)
-trim = len(returns) - len(smoothed)
+    env.close()
 
-df = pd.DataFrame({
-    "Episode_Return":        returns[trim:],
-    "Episode_Return_smooth": smoothed,
-    "env_step":              steps_log[trim:]
-})
+    smoothed = moving_average(returns)
+    trim = len(returns) - len(smoothed)
 
-df.to_csv(f"Assignment2/dqn_er_tn/dqn_er_tn_results_{SEED}.csv", index=False)
-print(f"Done. Total episodes: {episode}, Total steps: {env_step}")
+    df = pd.DataFrame({
+        "Episode_Return":        returns[trim:],
+        "Episode_Return_smooth": smoothed,
+        "env_step":              steps_log[trim:]
+    })
+
+    df.to_csv(f"Assignment2/dqn_er_tn/dqn_er_tn_results_{SEED}.csv", index=False)
+    print(f"Seed {SEED} done.")
+
+print("\nAll seeds completed.")
