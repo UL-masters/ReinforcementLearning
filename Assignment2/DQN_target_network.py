@@ -11,6 +11,7 @@ import copy
 # - network size: 256 hidden units
 # - discount factor: 0.90
 
+# class representing a DQN agent with a target network
 class TargetNetworkAgent:
     def __init__(self, state_dim=4, action_dim=2, lr=1e-4, hidden_size=256,
                  epsilon_decay_steps=500_000, gamma=0.9, target_update_freq=1000):
@@ -30,13 +31,16 @@ class TargetNetworkAgent:
         self.epsilon_min = 0.05
         self.epsilon_decay = (1.0 - 0.05) / epsilon_decay_steps
 
+    # epsilon-greedy action selection
     def select_action(self, state):
         if random.random() < self.epsilon:
             return random.randint(0, self.action_dim - 1)
+        # convert state to tensor and get action with highest Q-value
         state = torch.tensor(state, dtype=torch.float32).unsqueeze(0)
         with torch.no_grad():
             return self.model(state).argmax().item()
 
+    # perform a training step with target network
     def train_step(self, state, action, reward, next_state, done):
         state = torch.tensor(state, dtype=torch.float32).unsqueeze(0)
         next_state = torch.tensor(next_state, dtype=torch.float32).unsqueeze(0)
@@ -51,6 +55,7 @@ class TargetNetworkAgent:
 
         loss = nn.MSELoss()(q_sa, target.squeeze())
 
+        # backpropagate the loss and update the model parameters
         self.optimizer.zero_grad()
         loss.backward()
         torch.nn.utils.clip_grad_norm_(self.model.parameters(), 10.0)
@@ -62,10 +67,12 @@ class TargetNetworkAgent:
         if self.steps_done % self.target_update_freq == 0:
             self.target_model.load_state_dict(self.model.state_dict())
 
+    # decay epsilon after each step
     def decay_epsilon(self):
         self.epsilon = max(self.epsilon_min, self.epsilon - self.epsilon_decay)
 
 
+# simple feedforward neural network to represent the Q-function 
 class QNetwork(nn.Module):
     def __init__(self, state_dim=4, action_dim=2, hidden_size=256):
         super().__init__()
@@ -76,6 +83,6 @@ class QNetwork(nn.Module):
             nn.ReLU(),
             nn.Linear(hidden_size, action_dim)
         )
-
+    # forward pass to compute Q-values for all actions given a state
     def forward(self, x):
         return self.net(x)

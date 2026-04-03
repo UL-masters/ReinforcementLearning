@@ -4,6 +4,7 @@ import torch.optim as optim
 import random
 import copy
 from collections import deque
+import numpy as np
 
 # hyperparameters based on ablation study:
 # - learning rate: 0.0001
@@ -12,7 +13,7 @@ from collections import deque
 # - network size: 256 hidden units
 # - discount factor: 0.90
 
-# DQN agent with both Experience Replay and Target Network
+# class representing a DQN agent with experience replay and a target network
 class FullDQNAgent:
     def __init__(self, state_dim=4, action_dim=2, lr=1e-4, hidden_size=256,
                  epsilon_decay_steps=500_000, gamma=0.9, target_update_freq=1000):
@@ -35,19 +36,22 @@ class FullDQNAgent:
         self.replay_buffer = ReplayBuffer(100_000)
         self.batch_size = 64
 
+    # epsilon-greedy action selection
     def select_action(self, state):
         if random.random() < self.epsilon:
             return random.randint(0, self.action_dim - 1)
+        # convert state to tensor and get action with highest Q-value
         state = torch.tensor(state, dtype=torch.float32).unsqueeze(0)
         with torch.no_grad():
             return self.model(state).argmax().item()
 
-# store transition in replay buffer
+    # store transition in replay buffer
     def store_transition(self, state, action, reward, next_state, done):
         self.replay_buffer.add(state, action, reward, next_state, done)
 
-# train on a batch of transitions sampled from replay buffer
+    # train on a batch of transitions sampled from replay buffer
     def train_step(self):
+        # only train if enough samples
         if len(self.replay_buffer) < self.batch_size:
             return
 
@@ -64,6 +68,7 @@ class FullDQNAgent:
 
         loss = nn.MSELoss()(q_sa, target)
 
+        # backpropagate the loss and update the model parameters
         self.optimizer.zero_grad()
         loss.backward()
         torch.nn.utils.clip_grad_norm_(self.model.parameters(), 10.0)
@@ -75,10 +80,11 @@ class FullDQNAgent:
         if self.steps_done % self.target_update_freq == 0:
             self.target_model.load_state_dict(self.model.state_dict())
 
+    # decay epsilon after each step
     def decay_epsilon(self):
         self.epsilon = max(self.epsilon_min, self.epsilon - self.epsilon_decay)
 
-
+# simple feedforward neural network to represent the Q-function 
 class QNetwork(nn.Module):
     def __init__(self, state_dim=4, action_dim=2, hidden_size=256):
         super().__init__()
@@ -90,26 +96,32 @@ class QNetwork(nn.Module):
             nn.Linear(hidden_size, action_dim)
         )
 
+    # forward pass to compute Q-values for all actions given a state
     def forward(self, x):
         return self.net(x)
 
 
 class ReplayBuffer:
+    # fixed-size replay memory for storing and sampling transitions
     def __init__(self, capacity=100_000):
         self.buffer = deque(maxlen=capacity)
 
+    # add one transition to the buffer
     def add(self, state, action, reward, next_state, done):
         self.buffer.append((state, action, reward, next_state, done))
 
+    # randomly sample a mini-batch and convert it to tensors
     def sample(self, batch_size):
         batch = random.sample(self.buffer, batch_size)
+
         states, actions, rewards, next_states, dones = zip(*batch)
+
         return (
-            torch.tensor(states, dtype=torch.float32),
-            torch.tensor(actions, dtype=torch.long),
-            torch.tensor(rewards, dtype=torch.float32),
-            torch.tensor(next_states, dtype=torch.float32),
-            torch.tensor(dones, dtype=torch.float32)
+            torch.tensor(np.array(states), dtype=torch.float32),
+            torch.tensor(np.array(actions), dtype=torch.long),
+            torch.tensor(np.array(rewards), dtype=torch.float32),
+            torch.tensor(np.array(next_states), dtype=torch.float32),
+            torch.tensor(np.array(dones), dtype=torch.float32)
         )
 
     def __len__(self):

@@ -14,7 +14,8 @@ import numpy as np
 
 # class representing a DQN agent with experience replay
 class ExperienceReplayAgent:
-    def __init__(self, state_dim=4, action_dim=2, lr=1e-4, hidden_size=256, epsilon_decay_steps=500_000, gamma=0.9):
+    def __init__(self, state_dim=4, action_dim=2, lr=1e-4, hidden_size=256, 
+                 epsilon_decay_steps=500_000, gamma=0.9):
         self.model = QNetwork(state_dim, action_dim, hidden_size)
         self.optimizer = optim.Adam(self.model.parameters(), lr=lr)
 
@@ -36,10 +37,11 @@ class ExperienceReplayAgent:
         with torch.no_grad():
             return self.model(state).argmax().item()
         
+    # store transition in replay buffer
     def store_transition(self, state, action, reward, next_state, done):
         self.replay_buffer.add(state, action, reward, next_state, done)
 
-    # perform a training step using replay buffer
+    # train on a batch of transitions sampled from replay buffer
     def train_step(self):
         # only train if enough samples
         if len(self.replay_buffer) < self.batch_size:
@@ -47,7 +49,7 @@ class ExperienceReplayAgent:
 
         states, actions, rewards, next_states, dones = self.replay_buffer.sample(self.batch_size)
 
-        # Q(s,a)
+        # current Q-values from online network
         q_values = self.model(states)
         q_sa = q_values.gather(1, actions.unsqueeze(1)).squeeze()
 
@@ -88,12 +90,15 @@ class QNetwork(nn.Module):
     
 
 class ReplayBuffer:
+    # fixed-size replay memory for storing and sampling transitions
     def __init__(self, capacity=100_000):
         self.buffer = deque(maxlen=capacity)
 
+    # add one transition to the buffer
     def add(self, state, action, reward, next_state, done):
         self.buffer.append((state, action, reward, next_state, done))
 
+    # randomly sample a mini-batch and convert it to tensors
     def sample(self, batch_size):
         batch = random.sample(self.buffer, batch_size)
 
