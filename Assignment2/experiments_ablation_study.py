@@ -3,21 +3,19 @@ import gymnasium as gym
 import numpy as np
 import pandas as pd
 import os
-import matplotlib.pyplot as plt
-import seaborn as sns
-import matplotlib.ticker as ticker
 import random
 import torch
-
 from DQN_naive import NaiveAgent
 
 
+# smooth episode returns for plotting and reporting
 def moving_average(data, window=10):
     if len(data) < window:
         return np.array(data)
     return np.convolve(data, np.ones(window) / window, mode='valid')
 
 
+# run one training experiment for a given config and random seed
 def run_experiment(config, total_steps=500_000, train_freq=4, seed=0):
     env = gym.make("CartPole-v1")
     agent = NaiveAgent(**config)
@@ -55,6 +53,7 @@ def run_experiment(config, total_steps=500_000, train_freq=4, seed=0):
     return returns, steps_log
 
 
+# save returns and environment steps to csv
 def save_results(returns, steps, filename):
     pd.DataFrame({
         "Episode_Return": returns,
@@ -62,6 +61,7 @@ def save_results(returns, steps, filename):
     }).to_csv(filename, index=False)
 
 
+# summarize final performance using the last 50 episodes
 def evaluate(returns):
     tail = returns[-50:] if len(returns) >= 50 else returns
     return {
@@ -70,6 +70,7 @@ def evaluate(returns):
     }
 
 
+# interpolate runs onto a shared step axis before averaging
 def interpolate_to_common_steps(all_returns, all_steps, n_points=500):
     common_steps = np.linspace(
         max(s[0] for s in all_steps),
@@ -85,6 +86,7 @@ if __name__ == "__main__":
     start = datetime.now()
     print(f"Starting ablation study at {start.strftime('%Y-%m-%d %H:%M:%S')}")
 
+    # directory for per-run and per-setting outputs
     os.makedirs("Assignment2/experiments", exist_ok=True)
 
     # baseline config - middle value of each parameter range
@@ -106,6 +108,8 @@ if __name__ == "__main__":
 
     N_SEEDS = 5
     results_summary = []
+
+    # sweep one parameter at a time around the baseline configuration
     for param, values in experiments.items():
         print(f"\n=== Testing {param} ===")
 
@@ -120,6 +124,7 @@ if __name__ == "__main__":
 
             all_runs, all_steps = [], []
 
+            # run multiple seeds for each parameter value
             for seed in range(N_SEEDS):
                 print(f"  {param}={val} | seed {seed}")
                 returns, steps = run_experiment(config, train_freq=train_freq, seed=seed)
@@ -143,6 +148,7 @@ if __name__ == "__main__":
                 "std_across_seeds": np.std([np.mean(r[-50:]) for r in all_runs])
             })
 
+    # write aggregated summary across all ablation settings
     summary_df = pd.DataFrame(results_summary)
     summary_df.to_csv("Assignment2/experiments-ablation/summary.csv", index=False)
 
