@@ -5,6 +5,8 @@ import random
 import copy
 from collections import deque
 import numpy as np
+from DQN_naive import QNetwork
+from DQN_experience_replay import ReplayBuffer
 
 # hyperparameters based on ablation study:
 # - learning rate: 0.0001
@@ -15,7 +17,7 @@ import numpy as np
 
 # class representing a DQN agent with experience replay and a target network
 class FullDQNAgent:
-    def __init__(self, state_dim=4, action_dim=2, lr=1e-4, hidden_size=256,
+    def __init__(self, state_dim=4, action_dim=2, lr=1e-4, hidden_size=256, 
                  epsilon_decay_steps=500_000, gamma=0.9, target_update_freq=1000):
 
         self.model = QNetwork(state_dim, action_dim, hidden_size)
@@ -83,46 +85,3 @@ class FullDQNAgent:
     # decay epsilon after each step
     def decay_epsilon(self):
         self.epsilon = max(self.epsilon_min, self.epsilon - self.epsilon_decay)
-
-# simple feedforward neural network to represent the Q-function 
-class QNetwork(nn.Module):
-    def __init__(self, state_dim=4, action_dim=2, hidden_size=256):
-        super().__init__()
-        self.net = nn.Sequential(
-            nn.Linear(state_dim, hidden_size),
-            nn.ReLU(),
-            nn.Linear(hidden_size, hidden_size),
-            nn.ReLU(),
-            nn.Linear(hidden_size, action_dim)
-        )
-
-    # forward pass to compute Q-values for all actions given a state
-    def forward(self, x):
-        return self.net(x)
-
-
-class ReplayBuffer:
-    # fixed-size replay memory for storing and sampling transitions
-    def __init__(self, capacity=100_000):
-        self.buffer = deque(maxlen=capacity)
-
-    # add one transition to the buffer
-    def add(self, state, action, reward, next_state, done):
-        self.buffer.append((state, action, reward, next_state, done))
-
-    # randomly sample a mini-batch and convert it to tensors
-    def sample(self, batch_size):
-        batch = random.sample(self.buffer, batch_size)
-
-        states, actions, rewards, next_states, dones = zip(*batch)
-
-        return (
-            torch.tensor(np.array(states), dtype=torch.float32),
-            torch.tensor(np.array(actions), dtype=torch.long),
-            torch.tensor(np.array(rewards), dtype=torch.float32),
-            torch.tensor(np.array(next_states), dtype=torch.float32),
-            torch.tensor(np.array(dones), dtype=torch.float32)
-        )
-
-    def __len__(self):
-        return len(self.buffer)

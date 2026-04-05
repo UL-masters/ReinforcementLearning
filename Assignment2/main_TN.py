@@ -5,16 +5,9 @@ import random
 import torch
 import os
 from DQN_target_network import TargetNetworkAgent
+from main_Naive import moving_average
 
 os.makedirs("Assignment2/dqn_tn", exist_ok=True)
-
-# smooth learning curves for easier visual comparison
-def moving_average(data, window=10):
-    if len(data) < window:
-        return np.array(data)
-    return np.convolve(data, np.ones(window) / window, mode='valid')
-
-
 
 # training configuration
 TOTAL_STEPS = 1_000_000

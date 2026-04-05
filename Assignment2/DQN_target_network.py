@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.optim as optim
 import random
 import copy
+from DQN_naive import QNetwork
 
 # hyperparameters based on ablation study:
 # - learning rate: 0.0001
@@ -71,18 +72,3 @@ class TargetNetworkAgent:
     def decay_epsilon(self):
         self.epsilon = max(self.epsilon_min, self.epsilon - self.epsilon_decay)
 
-
-# simple feedforward neural network to represent the Q-function 
-class QNetwork(nn.Module):
-    def __init__(self, state_dim=4, action_dim=2, hidden_size=256):
-        super().__init__()
-        self.net = nn.Sequential(
-            nn.Linear(state_dim, hidden_size),
-            nn.ReLU(),
-            nn.Linear(hidden_size, hidden_size),
-            nn.ReLU(),
-            nn.Linear(hidden_size, action_dim)
-        )
-    # forward pass to compute Q-values for all actions given a state
-    def forward(self, x):
-        return self.net(x)

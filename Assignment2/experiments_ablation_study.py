@@ -6,14 +6,7 @@ import os
 import random
 import torch
 from DQN_naive import NaiveAgent
-
-
-# smooth episode returns for plotting and reporting
-def moving_average(data, window=10):
-    if len(data) < window:
-        return np.array(data)
-    return np.convolve(data, np.ones(window) / window, mode='valid')
-
+from main_Naive import moving_average
 
 # run one training experiment for a given config and random seed
 def run_experiment(config, total_steps=500_000, train_freq=4, seed=0):
