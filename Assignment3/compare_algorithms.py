@@ -5,6 +5,9 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.distributions import Categorical
 import matplotlib.pyplot as plt
+from reinforce import PolicyNetwork, compute_returns, collect_episode, reinforce_update
+from AC import ValueNetwork, ac_update
+from A2C import a2c_update
 
 
 ENVIRONMENT_NAME = "CartPole-v1"
@@ -16,67 +19,6 @@ SEED = 42
 ENTROPY_COEF = 0.01
 LOG_INTERVAL = 50
 
-
-class PolicyNetwork(nn.Module):
-    def __init__(self, state_dim, action_dim, hidden_size):
-        super().__init__()
-        self.net = nn.Sequential(
-            nn.Linear(state_dim, hidden_size), nn.ReLU(),
-            nn.Linear(hidden_size, hidden_size), nn.ReLU(),
-            nn.Linear(hidden_size, action_dim),
-        )
-    def forward(self, x):
-        return self.net(x)
-    def get_distribution(self, state):
-        return Categorical(logits=self.forward(state))
-
-
-class ValueNetwork(nn.Module):
-    def __init__(self, state_dim, hidden_size):
-        super().__init__()
-        self.net = nn.Sequential(
-            nn.Linear(state_dim, hidden_size), nn.ReLU(),
-            nn.Linear(hidden_size, hidden_size), nn.ReLU(),
-            nn.Linear(hidden_size, 1),
-        )
-    def forward(self, x):
-        return self.net(x).squeeze(-1)
-
-
-# ----- shared helpers ----- #
-
-def compute_returns(rewards, gamma):
-    G, returns = 0.0, []
-    for r in reversed(rewards):
-        G = r + gamma * G
-        returns.insert(0, G)
-    return torch.tensor(returns, dtype=torch.float32)
-
-
-def collect_episode(env, policy):
-    log_probs, rewards, states = [], [], []
-    state, _ = env.reset()
-    done = False
-    while not done:
-        state_tensor = torch.tensor(state, dtype=torch.float32)
-        states.append(state_tensor)
-        dist = policy.get_distribution(state_tensor)
-        action = dist.sample()
-        log_probs.append(dist.log_prob(action))
-        state, reward, terminated, truncated, _ = env.step(action.item())
-        done = terminated or truncated
-        rewards.append(reward)
-    return log_probs, rewards, states, sum(rewards)
-
-
-def reinforce_update(optimizer, log_probs, rewards, gamma):
-    returns = compute_returns(rewards, gamma)
-    returns = (returns - returns.mean()) / (returns.std() + 1e-8)
-    loss = -(torch.stack(log_probs) * returns).sum()
-    optimizer.zero_grad()
-    loss.backward()
-    optimizer.step()
-    return loss.item()
 
 # ----- REINFORCE ----- #
 
@@ -105,21 +47,6 @@ def train_reinforce():
 
 # ----- AC (basic Actor-Critic) ----- #
 
-def ac_update(actor_opt, critic_opt, log_probs, rewards, states, value_net, gamma):
-    returns       = compute_returns(rewards, gamma)
-    states_t      = torch.stack(states)
-    log_probs_t   = torch.stack(log_probs)
-
-    # actor uses raw MC returns as weights — no baseline subtracted
-    actor_loss = -(log_probs_t * returns).sum()
-    actor_opt.zero_grad(); actor_loss.backward(); actor_opt.step()
-
-    # critic: MSE between V(s) predictions and MC returns
-    critic_loss = nn.functional.mse_loss(value_net(states_t), returns)
-    critic_opt.zero_grad(); critic_loss.backward(); critic_opt.step()
-
-    return actor_loss.item(), critic_loss.item()
-
 def train_ac():
     torch.manual_seed(SEED); np.random.seed(SEED)
     env = gym.make(ENVIRONMENT_NAME)
@@ -144,20 +71,6 @@ def train_ac():
 
 
 # ----- A2C ----- #
-
-def a2c_update(actor_opt, critic_opt, log_probs, rewards, states, policy, value_net, gamma):
-    returns     = compute_returns(rewards, gamma)
-    states_t    = torch.stack(states)
-    values      = value_net(states_t)
-    advantages  = returns - values.detach()
-    advantages  = (advantages - advantages.mean()) / (advantages.std() + 1e-8)
-    entropy     = torch.stack([policy.get_distribution(s).entropy() for s in states]).mean()
-    actor_loss  = -(torch.stack(log_probs) * advantages).sum() - ENTROPY_COEF * entropy
-    actor_opt.zero_grad(); actor_loss.backward(); actor_opt.step()
-    critic_loss = nn.functional.mse_loss(value_net(states_t), returns)
-    critic_opt.zero_grad(); critic_loss.backward(); critic_opt.step()
-    return actor_loss.item(), critic_loss.item()
-
 
 def train_a2c():
     torch.manual_seed(SEED); np.random.seed(SEED)
