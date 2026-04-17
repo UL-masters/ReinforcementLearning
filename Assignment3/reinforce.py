@@ -63,11 +63,12 @@ def compute_returns(rewards: list[float], gamma: float) -> torch.Tensor:
     
     return returns
 
-# run one episode and collect log probabilities of actions taken, rewards received, and total return
-def collect_episode (env: gym.Env, policy: PolicyNetwork) -> tuple[list, list, list]:
+# run one episode and collect log probabilities of actions taken, rewards received, states, and total return
+def collect_episode(env: gym.Env, policy: PolicyNetwork) -> tuple[list, list, list, float]:
     
     log_probs = []
     rewards = []
+    states = []
     
     state, _ = env.reset()
     
@@ -75,6 +76,7 @@ def collect_episode (env: gym.Env, policy: PolicyNetwork) -> tuple[list, list, l
     while not done:
         
         state_tensor = torch.tensor(state, dtype=torch.float32)
+        states.append(state_tensor)
         
         # sample action from policy distribution
         dist = policy.get_distribution(state_tensor)
@@ -92,7 +94,7 @@ def collect_episode (env: gym.Env, policy: PolicyNetwork) -> tuple[list, list, l
         state = next_state
     
     episode_return = sum(rewards)
-    return log_probs, rewards, episode_return
+    return log_probs, rewards, states, episode_return
 
 # ----- REINFORCE update step ----- #
 
