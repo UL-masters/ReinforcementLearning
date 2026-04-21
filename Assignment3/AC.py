@@ -128,13 +128,11 @@ def ac_update(
 
     log_probs_tensor = torch.stack(log_probs)
 
-    # actor loss: use critic Q_phi(s) as the weight
-    # detach so actor gradient does not flow into the critic network
-    q_values = value_net(states_tensor).detach()
-    actor_loss = -(log_probs_tensor * q_values).sum()
+    # policy loss: negative because we want gradient ASCENT on J(theta)
+    policy_loss = -(log_probs_tensor * returns).sum()
 
     actor_optimizer.zero_grad()
-    actor_loss.backward()
+    policy_loss.backward()
     actor_optimizer.step()
 
     # critic loss: MSE between predicted Q(s) and MC return G_t
@@ -146,7 +144,7 @@ def ac_update(
     critic_loss.backward()
     critic_optimizer.step()
 
-    return actor_loss.item(), critic_loss.item()
+    return policy_loss.item(), critic_loss.item()
 
 
 # train actor and critic using basic AC and return list of episode returns
