@@ -7,11 +7,11 @@ from torch.distributions import Categorical
 import matplotlib.pyplot as plt
 
 ENVIRONMENT_NAME = "CartPole-v1"
-GAMMA = 0.99            # discount factor
-LEARNING_RATE = 1e-3    # learning rate for both actor and critic optimizers
-N_EPISODES = 1000       # number of episodes to train on
-HIDDEN_SIZE = 64        # number of neurons in the hidden layers
-SEED = 42               # random seed for reproducibility
+GAMMA = 0.99 # discount factor
+LEARNING_RATE = 1e-3 # learning rate for both actor and critic optimizers
+N_EPISODES = 1000 # number of episodes to train on
+HIDDEN_SIZE = 64 # number of neurons in the hidden layers
+SEED = 42 # random seed for reproducibility
 
 LOG_INTERVAL = 50
 
